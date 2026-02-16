@@ -44,10 +44,10 @@ def _convert_binance_cripto_data(earn_apr_data, earn_amount_data, info_names):
 
     ALL_INFO = {
         'avg_price': lambda: None,
-        'dy': lambda: text_to_number(earn_apr_data['data']['savingFlexibleProduct'][0]['apy']) * 100,
+        'dy': lambda: text_to_number(earn_apr_data['data']['savingFlexibleProduct'][0]['apy'], should_convert_thousand_decimal_separators=False) * 100,
         'initial_date': lambda: None,
-        'latest_dividend': lambda: text_to_number(f'{(((1 + latests_dividends) ** (1 / 52.1428652)) -1):.8f}'),
-        'latests_dividends': lambda: text_to_number(f'{latests_dividends:.8f}'),
+        'latest_dividend': lambda: text_to_number(f'{(((1 + latests_dividends) ** (1 / 52.1428652)) -1):.8f}', should_convert_thousand_decimal_separators=False),
+        'latests_dividends': lambda: text_to_number(f'{latests_dividends:.8f}', should_convert_thousand_decimal_separators=False),
         'link': lambda: None,
         'liquidity': lambda: None,
         'market_value': lambda: None,
@@ -141,8 +141,8 @@ def _convert_investidor10_cripto_data(html_page, json_historical_data, info_name
     ]
 
     last_quote = max(json_historical_data, key=lambda quote: datetime.strptime(quote["created_at"], "%d/%m/%Y"))
-    latest_price = text_to_number(last_quote['brl_price'])
-    avg_price = sum(text_to_number(item['brl_price']) for item in json_historical_data) / len(json_historical_data)
+    latest_price = text_to_number(last_quote['brl_price'], should_convert_thousand_decimal_separators=False)
+    avg_price = sum(text_to_number(item['brl_price'], should_convert_thousand_decimal_separators=False) for item in json_historical_data) / len(json_historical_data)
 
     ALL_INFO = {
         'avg_price': lambda: avg_price,
@@ -153,18 +153,18 @@ def _convert_investidor10_cripto_data(html_page, json_historical_data, info_name
         'link': lambda: None,
         'liquidity': lambda: None,
         'market_value': lambda: None,
-        'max_52_weeks': lambda: max(text_to_number(item['brl_price']) for item in json_historical_data),
-        #'max_52_weeks': lambda: text_to_number(get_substring(get_substring(html_page, 'Maior cotação em 1 ano</span>', '</small>'), '<small>(R$', ')')),
+        'max_52_weeks': lambda: max(text_to_number(item['brl_price'], should_convert_thousand_decimal_separators=False) for item in json_historical_data),
+        #'max_52_weeks': lambda: text_to_number(get_substring(get_substring(html_page, 'Maior cotação em 1 ano</span>', '</small>'), '<small>(R$', ')'), should_convert_thousand_decimal_separators=False),
         'mayer_multiple': lambda: latest_price / avg_price,
-        'min_52_weeks': lambda: min(text_to_number(item['brl_price']) for item in json_historical_data),
-        #'min_52_weeks': lambda: text_to_number(get_substring(get_substring(html_page, 'Menor cotação em 1 ano</span>', '</small>'), '<small>(R$', ')')),
+        'min_52_weeks': lambda: min(text_to_number(item['brl_price'], should_convert_thousand_decimal_separators=False) for item in json_historical_data),
+        #'min_52_weeks': lambda: text_to_number(get_substring(get_substring(html_page, 'Menor cotação em 1 ano</span>', '</small>'), '<small>(R$', ')'), should_convert_thousand_decimal_separators=False),
         'name': lambda: get_substring(html_page, '<h1>', '</h1>', patterns_to_remove),
         'price': lambda: latest_price,
-        #'price': lambda: text_to_number(get_substring(html_page, 'Valor em Reais</span>', '</span>', patterns_to_remove)),
+        #'price': lambda: text_to_number(get_substring(html_page, 'Valor em Reais</span>', '</span>', patterns_to_remove), should_convert_thousand_decimal_separators=False),
         'sector': lambda: get_substring(get_substring(html_page, '<span class="label label-default">', '</h2>'), '<span class="label label-default">', '</span>'),
         'total_issued_shares': lambda: None,
-        'variation_12m': lambda: text_to_number(get_substring(html_page, 'VARIAÇÃO (12M)</span>', '</span>', patterns_to_remove)),
-        'variation_30d': lambda: text_to_number(get_substring(html_page, '>30</div>', '</div>')),
+        'variation_12m': lambda: text_to_number(get_substring(html_page, 'VARIAÇÃO (12M)</span>', '</span>', patterns_to_remove), should_convert_thousand_decimal_separators=False),
+        'variation_30d': lambda: text_to_number(get_substring(html_page, '>30</div>', '</div>'), should_convert_thousand_decimal_separators=False),
     }
 
     final_data = { info: ALL_INFO[info]() for info in info_names}
@@ -233,21 +233,21 @@ def _convert_coinmarketcap_cripto_data(html_page, json_historical_data, info_nam
         'link': lambda: get_substring(html_page, '"website":[', ']', [ '"' ]),
         #'link': lambda: get_substring(get_substring(html_page, 'Site</div>', '" target=') + '>', 'href="//', '>'),
         'liquidity': lambda: get_quotes_info(quotes, 'volume', sum) / total_quotes,
-        #'liquidity': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Volume (24h)</div>', '</span></div>') + '>', 'R$', '>')),
+        #'liquidity': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Volume (24h)</div>', '</span></div>') + '>', 'R$', '>'), should_convert_thousand_decimal_separators=False),
         'market_value': lambda: last_quote['marketCap'],
-        #'market_value': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Capitalização de Mercado</div>', '</span></div>') + '>', '<span>R$', '>')),
+        #'market_value': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Capitalização de Mercado</div>', '</span></div>') + '>', '<span>R$', '>'), should_convert_thousand_decimal_separators=False),
         'max_52_weeks': lambda: get_quotes_info(quotes, 'close', max),
         'mayer_multiple': lambda: latest_price / avg_price,
         'min_52_weeks': lambda: get_quotes_info(quotes, 'close', min),
         #'name': lambda: name,
         'name': lambda: get_substring(html_page, '"slug":"', '"'),
         'price': lambda: latest_price,
-        #'price': lambda: multiply_by_unit(get_substring(html_page, 'price-display">R$', '<')),
+        #'price': lambda: multiply_by_unit(get_substring(html_page, 'price-display">R$', '<'), should_convert_thousand_decimal_separators=False),
         'sector': lambda: get_substring(html_page, '"category":"', '"'),
-        'total_issued_shares': lambda: text_to_number(get_substring(get_substring(html_page, '"totalSupply":{', '},'), '"value":', ',')),
-        #'total_issued_shares': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Fornecimento total</div>', 'Fornecimento máximo</div>', [ ticker ]), 'popover-base"><span>', '</span>')),
-        'variation_12m': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage30d":', ',')),
-        'variation_30d': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage1y":', ',')),
+        'total_issued_shares': lambda: text_to_number(get_substring(get_substring(html_page, '"totalSupply":{', '},'), '"value":', ','), should_convert_thousand_decimal_separators=False),
+        #'total_issued_shares': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Fornecimento total</div>', 'Fornecimento máximo</div>', [ ticker ]), 'popover-base"><span>', '</span>'), should_convert_thousand_decimal_separators=False),
+        'variation_12m': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage30d":', ','), should_convert_thousand_decimal_separators=False),
+        'variation_30d': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage1y":', ','), should_convert_thousand_decimal_separators=False),
     }
 
     final_data = { info: ALL_INFO[info]() for info in info_names}
