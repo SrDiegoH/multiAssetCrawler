@@ -1,8 +1,6 @@
 import re
 import requests
 
-from log.log_manager import log_debug
-
 def get_substring(text, start_text, end_text, replace_by_paterns=[], should_remove_tags=False):
     start_index = text.find(start_text)
     new_text = text[start_index:]
@@ -69,11 +67,3 @@ def multiply_by_unit(data, should_convert_thousand_decimal_separators=True, conv
         return text_to_number(data.replace('Trilhões', '').replace('Trillions', '').replace('T', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000_000_000_000
 
     return text_to_number(data, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
-
-def request_get(url, headers=None):
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-
-    log_debug(f'Response from {url} : {response}')
-
-    return response
