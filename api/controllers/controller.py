@@ -56,7 +56,7 @@ def crawl_acao_data(ticker):
     log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
     log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
 
-    can_use_cache = preprocess_cache(ticker, should_delete_all_cache, should_clear_cached_data, should_use_cache)
+    can_use_cache = preprocess_cache(ticker, CACHE_FILE_ACAO, should_delete_all_cache, should_clear_cached_data, should_use_cache)
 
     should_update_cache, data = get_acao_data(ticker, source, info_names, can_use_cache)
 
