@@ -8,7 +8,7 @@ from utils.utils import get_cache_parameter_info, get_parameter_info
 controller_blue_print = Blueprint("controller", __name__, url_prefix="/")
 
 @controller_blue_print.route('/fii/<ticker>', methods=['GET'])
-def get_fii_data(ticker):
+def crawl_fii_data(ticker):
     should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
     should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
     should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
@@ -40,7 +40,7 @@ def get_fii_data(ticker):
 
 
 @controller_blue_print.route('/', methods=['GET'])
-def get_info():
+def info():
     return '''
         To get FIIs (BR REITs) infos, access fii/ endpoint passing the ticker name.
     ''', 200
