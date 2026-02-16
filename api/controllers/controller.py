@@ -1,9 +1,15 @@
 from flask import Blueprint, jsonify, request
 
-from api.services.nacional.acao_service import get_acao_data, VALID_ACAO_SOURCES, VALID_ACAO_INFOS
-from api.services.nacional.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
 from api.services.internacional.cripto_service import get_cripto_data, VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES
-from cache.cache_manager import CACHE_FILE_FII, CACHE_FILE_ACAO, CACHE_FILE_CRIPTO, preprocess_cache, upsert_cache
+from api.services.nacional.acao_service import get_acao_data, VALID_ACAO_INFOS, VALID_ACAO_SOURCES
+from api.services.nacional.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
+from cache.cache_manager import (
+    CACHE_FILE_ACAO,
+    CACHE_FILE_CRIPTO,
+    CACHE_FILE_FII,
+    preprocess_cache,
+    upsert_cache,
+)
 from log.log_manager import log_debug
 from utils.utils import get_cache_parameter_info, get_parameter_info
 
