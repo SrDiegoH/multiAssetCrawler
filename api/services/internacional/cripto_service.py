@@ -325,7 +325,7 @@ def _get_data_from_sources(name, ticker, source, info_names):
         VALID_CRIPTO_SOURCES['INVESTIDOR10_SOURCE']: _get_data_from_investidor10,
         VALID_CRIPTO_SOURCES['COINMARKETCAP_SOURCE']: _get_data_from_coinmarketcap
     }
-
+    log_debug(f'----->source: {source}, found: {SOURCES.get(source)}')
     fetch_function = SOURCES.get(source, _get_data_from_all_sources)
     return fetch_function(name, ticker, info_names)
 
