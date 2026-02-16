@@ -736,7 +736,7 @@ def get_data_from_all_sources(ticker, info_names):
 
     return { **combined_data, **data_investidor_10 }
 
-def get_fii_data_from_sources(ticker, source, info_names):
+def _get_data_from_sources(ticker, source, info_names):
     SOURCES = {
         VALID_SOURCES['BMFBOVESPA_SOURCE']: get_data_from_bmfbovespa,
         VALID_SOURCES['FIIS_SOURCE']: get_data_from_fiis,
@@ -747,3 +747,27 @@ def get_fii_data_from_sources(ticker, source, info_names):
 
     fetch_function = SOURCES.get(source, get_data_from_all_sources)
     return fetch_function(ticker, info_names)
+
+def get_fii_data(ticker, source, info_names, can_use_cache):
+    cached_data = get_data_from_cache(ticker, info_names, can_use_cache)
+
+    SHOULD_UPDATE_CACHE = True
+
+    if not can_use_cache:
+        return not SHOULD_UPDATE_CACHE, _get_data_from_sources(ticker, source, info_names)
+
+    missing_cache_info_names = filter_remaining_infos(cached_data, info_names)
+
+    if not missing_cache_info_names:
+        return not SHOULD_UPDATE_CACHE, cached_data
+
+    source_data = _get_data_from_sources(ticker, source, missing_cache_info_names)
+
+    if cached_data and source_data:
+        return SHOULD_UPDATE_CACHE, { **cached_data, **source_data }
+    elif cached_data and not source_data:
+        return not SHOULD_UPDATE_CACHE, cached_data
+    elif not cached_data and source_data:
+        return SHOULD_UPDATE_CACHE, source_data
+
+    return not SHOULD_UPDATE_CACHE, None
