@@ -17,7 +17,6 @@ VALID_CRIPTO_SOURCES = {
     'BINANCE_SOURCE': 'binance',
     'INVESTIDOR10_SOURCE': 'investidor10',
     'COINMARKETCAP_SOURCE': 'coinmarketcap'
-
 }
 
 VALID_CRIPTO_INFOS = [
