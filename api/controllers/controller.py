@@ -34,7 +34,7 @@ def crawl_fii_data(ticker):
         return jsonify({ 'error': 'No data found' }), 404
 
     if can_use_cache and should_update_cache:
-        upsert_cache(ticker, data)
+        upsert_cache(ticker, CACHE_FILE_FII, data)
 
     return jsonify(data), 200
 

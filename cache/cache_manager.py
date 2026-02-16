@@ -24,7 +24,7 @@ def _cache_exists(file):
     log_info('No cache file found')
     return False
 
-def upsert_cache(id, data, file):
+def upsert_cache(id, file, data):
     lines = []
     updated = False
 
