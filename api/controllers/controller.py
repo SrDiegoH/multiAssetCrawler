@@ -1,14 +1,13 @@
-from flask import Flask, jsonify, request
+from flask import Blueprint, jsonify, request
 
-from br.fii_crawler import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
+from api.services.br.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
 from cache.cache_manager import CACHE_FILE_FII, preprocess_cache, upsert_cache
-from log.log_manager import LOG_LEVEL, log_debug
+from log.log_manager import log_debug
 from utils.utils import get_cache_parameter_info, get_parameter_info
 
-app = Flask(__name__)
-app.json.sort_keys = False
+controller_blue_print = Blueprint("controller", __name__, url_prefix="/")
 
-@app.route('/fii/<ticker>', methods=['GET'])
+@controller_blue_print.route('/fii/<ticker>', methods=['GET'])
 def get_fii_data(ticker):
     should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
     should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
@@ -39,6 +38,9 @@ def get_fii_data(ticker):
 
     return jsonify(data), 200
 
-if __name__ == '__main__':
-    log_debug('Starting API')
-    app.run(debug=LOG_LEVEL == 'DEBUG')
+
+@controller_blue_print.route('/', methods=['GET'])
+def get_info():
+    return '''
+        To get FIIs (BR REITs) infos, access fii/ endpoint passing the ticker name.
+    ''', 200
