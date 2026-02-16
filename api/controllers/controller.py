@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
 
-from api.services.br.acao_service import get_acao_data, VALID_ACAO_SOURCES, VALID_ACAO_INFOS
-from api.services.br.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
-from cache.cache_manager import CACHE_FILE_FII, CACHE_FILE_ACAO, preprocess_cache, upsert_cache
+from api.services.nacional.acao_service import get_acao_data, VALID_ACAO_SOURCES, VALID_ACAO_INFOS
+from api.services.nacional.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
+from api.services.internacional.cripto_service import get_cripto_data, VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES
+from cache.cache_manager import CACHE_FILE_FII, CACHE_FILE_ACAO, CACHE_FILE_CRIPTO, preprocess_cache, upsert_cache
 from log.log_manager import log_debug
 from utils.utils import get_cache_parameter_info, get_parameter_info
 
@@ -70,9 +71,44 @@ def crawl_acao_data(ticker):
 
     return jsonify(data), 200
 
+@controller_blue_print.route('/cripto/<name>/<ticker>', methods=['GET'])
+def crawl_cripto_data(name, ticker):
+    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
+    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
+    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
+
+    name = name.lower()
+    ticker = ticker.upper()
+
+    raw_source = get_parameter_info(request.args, 'source', VALID_CRIPTO_SOURCES['ALL_SOURCE'])
+    source = raw_source if raw_source in VALID_CRIPTO_SOURCES.values() else VALID_CRIPTO_SOURCES['ALL_SOURCE']
+
+    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_CRIPTO_INFOS ]
+    info_names = raw_info_names if len(raw_info_names) else VALID_CRIPTO_INFOS
+
+    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
+    log_debug(f'Cripto: {name} - {ticker} - Source: {source} - Info names: {info_names}')
+
+    can_use_cache = preprocess_cache(name, CACHE_FILE_CRIPTO, should_delete_all_cache, should_clear_cached_data, should_use_cache)
+
+    should_update_cache, data = get_cripto_data(name, ticker, source, info_names, can_use_cache)
+
+    log_debug(f'Final Data: {data}')
+
+    if not data:
+        return jsonify({ 'error': 'No data found' }), 404
+
+    if can_use_cache and should_update_cache:
+        upsert_cache(name, CACHE_FILE_CRIPTO, data)
+
+    return jsonify(data), 200
+
 @controller_blue_print.route('/', methods=['GET'])
 def info():
     return '''
-        To get FIIs (BR REIT like) infos, access fii/ endpoint passing the ticker name.
-        To get Ação (BR Stocks) infos, access acao/ endpoint passing the ticker name.
+        To get FIIs (BR REIT like) infos, access fii/ endpoint passing the ticker in path.
+
+        To get Ações (BR Stocks) infos, access acao/ endpoint passing the ticker in path.
+
+        To get Cryptocurrencies infos, access cripto/ endpoint passing the name and ticker respectively in path.
     ''', 200
