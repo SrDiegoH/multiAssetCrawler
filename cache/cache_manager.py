@@ -2,6 +2,8 @@ import ast
 from datetime import datetime, timedelta
 import os
 
+from log.log_manager import log_info, log_debug
+
 CACHE_FILE_FII = '/tmp/fii_cache.txt'
 CACHE_FILE_ACAO = '/tmp/acao_cache.txt'
 CACHE_FILE_STOCK = '/tmp/stock_cache.txt'
