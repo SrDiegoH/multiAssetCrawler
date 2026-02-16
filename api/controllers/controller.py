@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify, request
 
 from api.services.internacional.cripto_service import get_cripto_data, VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES
+from api.services.internacional.etf_service import get_etf_data, VALID_ETF_INFOS, VALID_ETF_SOURCES
 from api.services.nacional.acao_service import get_acao_data, VALID_ACAO_INFOS, VALID_ACAO_SOURCES
 from api.services.nacional.fii_service import get_fii_data, VALID_FII_INFOS, VALID_FII_SOURCES
 from cache.cache_manager import (
     CACHE_FILE_ACAO,
     CACHE_FILE_CRIPTO,
+    CACHE_FILE_ETF,
     CACHE_FILE_FII,
     preprocess_cache,
     upsert_cache,
@@ -77,14 +79,79 @@ def crawl_acao_data(ticker):
 
     return jsonify(data), 200
 
-@controller_blue_print.route('/cripto/<name>/<ticker>', methods=['GET'])
-def crawl_cripto_data(name, ticker):
+"""
+TODO: Finish stock and reit data
+@controller_blue_print.route('/stock/<ticker>', methods=['GET'])
+def get_stock_data(ticker):
+    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
+    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
+    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
+
+    ticker = ticker.upper()
+
+    raw_source = get_parameter_info(request.args, 'source', VALID_SOURCES['ALL_SOURCE'])
+    source = raw_source if raw_source in VALID_SOURCES.values() else VALID_SOURCES['ALL_SOURCE']
+
+    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_INFOS ]
+    info_names = raw_info_names if len(raw_info_names) else VALID_INFOS
+
+    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
+    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
+
+    can_use_cache = preprocess_cache(ticker, should_delete_all_cache, should_clear_cached_data, should_use_cache)
+
+    should_update_cache, data = get_data(ticker, share_type, source, info_names, can_use_cache, get_data_from_sources)
+
+    log_debug(f'Final Data: {data}')
+
+    if not data:
+        return jsonify({ 'error': 'No data found' }), 404
+
+    if can_use_cache and should_update_cache:
+        upsert_cache(ticker, data)
+
+    return jsonify(data), 200
+"""
+
+@controller_blue_print.route('/etf/<ticker>', methods=['GET'])
+def crawl_etf_data(ticker):
+    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
+    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
+    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
+
+    ticker = ticker.upper()
+
+    raw_source = get_parameter_info(request.args, 'source', VALID_ETF_SOURCES['ALL_SOURCE'])
+    source = raw_source if raw_source in VALID_ETF_SOURCES.values() else VALID_ETF_SOURCES['ALL_SOURCE']
+
+    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_ETF_INFOS ]
+    info_names = raw_info_names if len(raw_info_names) else VALID_ETF_INFOS
+
+    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
+    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
+
+    can_use_cache = preprocess_cache(ticker, CACHE_FILE_ETF, should_delete_all_cache, should_clear_cached_data, should_use_cache)
+
+    should_update_cache, data = get_etf_data(ticker, source, info_names, can_use_cache)
+
+    log_debug(f'Final Data: {data}')
+
+    if not data:
+        return jsonify({ 'error': 'No data found' }), 404
+
+    if can_use_cache and should_update_cache:
+        upsert_cache(ticker, CACHE_FILE_ETF, data)
+
+    return jsonify(data), 200
+
+@controller_blue_print.route('/cripto/<name>/<code>', methods=['GET'])
+def crawl_cripto_data(name, code):
     should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
     should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
     should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
 
     name = name.lower()
-    ticker = ticker.upper()
+    code = code.upper()
 
     raw_source = get_parameter_info(request.args, 'source', VALID_CRIPTO_SOURCES['ALL_SOURCE'])
     source = raw_source if raw_source in VALID_CRIPTO_SOURCES.values() else VALID_CRIPTO_SOURCES['ALL_SOURCE']
@@ -93,11 +160,11 @@ def crawl_cripto_data(name, ticker):
     info_names = raw_info_names if len(raw_info_names) else VALID_CRIPTO_INFOS
 
     log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
-    log_debug(f'Cripto: {name} - {ticker} - Source: {source} - Info names: {info_names}')
+    log_debug(f'Cripto: {name} - {code} - Source: {source} - Info names: {info_names}')
 
     can_use_cache = preprocess_cache(name, CACHE_FILE_CRIPTO, should_delete_all_cache, should_clear_cached_data, should_use_cache)
 
-    should_update_cache, data = get_cripto_data(name, ticker, source, info_names, can_use_cache)
+    should_update_cache, data = get_cripto_data(name, code, source, info_names, can_use_cache)
 
     log_debug(f'Final Data: {data}')
 
@@ -112,9 +179,20 @@ def crawl_cripto_data(name, ticker):
 @controller_blue_print.route('/', methods=['GET'])
 def info():
     return '''
-        To get FIIs (BR REIT like) infos, access fii/ endpoint passing the ticker in path.
-
-        To get Ações (BR Stocks) infos, access acao/ endpoint passing the ticker in path.
-
-        To get Cryptocurrencies infos, access cripto/ endpoint passing the name and ticker respectively in path.
+        To get <strong>Ações</strong> (Brazilian stocks) informations, access the <code>acao/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>FIIs</strong> (Brazilian REIT-like funds) informations, access the <code>fii/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>Stocks</strong> informations, access the <code>stock/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>REITs</strong> informations, access the <code>reit/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>ETFs</strong> informations, access the <code>etf/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>Cryptocurrencies</strong> informations, access the <code>cripto/</code> endpoint and pass the <strong>name</strong> and <strong>code</strong> respectively in the path.</br>
+        </br></br>
+        By default, cached data is used. To fetch fresh data, pass the query parameter <code>should_use_cache</code> as <strong>0</strong>.
+        To clear cached data for a specific asset, pass the query parameter <code>should_clear_cached_data</code> as <strong>1</strong>.
+        To delete all cached data for a specific asset class, pass the query parameter <code>should_delete_all_cache</code> as <strong>1</strong>.
+        </br></br>
+        By default, all valid information is returned. To filter specific informaton, pass the <strong>informaton names</strong> as a query parameter separeted by <code>,</code> (comma).
+        To see all valid information names for a specific asset class, access <code>valid-infos/</code> and pass the <strong>asset name</strong> in the path.
+        </br></br>
+        By default, data from all sources is returned. To crawl from a specific source, pass the <strong>source names</strong> as a query parameter.
+        To see all valid sources for a specific asset class, access <code>valid-sources/</code> and pass the <strong>asset name</strong> in the path.
     ''', 200

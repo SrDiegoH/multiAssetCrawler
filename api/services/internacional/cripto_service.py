@@ -66,7 +66,7 @@ def _convert_binance_cripto_data(earn_apr_data, earn_amount_data, info_names):
 
     return final_data
 
-def _get_data_from_binance(name, ticker, info_names):
+def _get_data_from_binance(name, code, info_names):
     try:
         headers = {
           'accept': '*/*',
@@ -92,7 +92,7 @@ def _get_data_from_binance(name, ticker, info_names):
           'x-ui-request-trace': '4f4e5166-6779-487c-a0c5-baaf878ef23b'
         }
 
-        response = request_get(f'https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset={ticker}&type=Flexible', headers)
+        response = request_get(f'https://www.binance.com/bapi/earn/v3/friendly/finance-earn/calculator/product/list?asset={code}&type=Flexible', headers)
         earn_apr_data = response.json()
 
         headers = {
@@ -119,13 +119,13 @@ def _get_data_from_binance(name, ticker, info_names):
             'x-ui-request-trace': '8525ae27-e673-4b13-b81d-ec0e318a662b'
         }
 
-        response = request_get(f'https://www.binance.com/bapi/earn/v2/friendly/finance-earn/calculator/calculate?productId={ticker}001&amount=1&productType=LENDING_FLEXIBLE&autoTransfer=true', headers)
+        response = request_get(f'https://www.binance.com/bapi/earn/v2/friendly/finance-earn/calculator/calculate?productId={code}001&amount=1&productType=LENDING_FLEXIBLE&autoTransfer=true', headers)
         earn_amount_data = response.json()
 
         converted_data = _convert_binance_cripto_data(earn_apr_data, earn_amount_data, info_names)
         log_debug(f'Converted fresh Binance data: {converted_data}')
         return converted_data
-    except Exception as error:
+    except:
         log_error(f'Error fetching data from Binance for "{name}": {traceback.format_exc()}')
         return None
 
@@ -171,7 +171,7 @@ def _convert_investidor10_cripto_data(html_page, json_historical_data, info_name
 
     return final_data
 
-def _get_data_from_investidor10(name, ticker, info_names):
+def _get_data_from_investidor10(name, code, info_names):
     try:
         headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -202,7 +202,7 @@ def _get_data_from_investidor10(name, ticker, info_names):
         converted_data = _convert_investidor10_cripto_data(html_page, json_historical_data, info_names)
         log_debug(f'Converted fresh Investidor 10 data: {converted_data}')
         return converted_data
-    except Exception as error:
+    except:
         log_error(f'Error fetching data from Investidor 10 for "{name}": {traceback.format_exc()}')
         return None
 
@@ -245,7 +245,7 @@ def _convert_coinmarketcap_cripto_data(html_page, json_historical_data, info_nam
         #'price': lambda: multiply_by_unit(get_substring(html_page, 'price-display">R$', '<'), should_convert_thousand_decimal_separators=False),
         'sector': lambda: get_substring(html_page, '"category":"', '"'),
         'total_issued_shares': lambda: text_to_number(get_substring(get_substring(html_page, '"totalSupply":{', '},'), '"value":', ','), should_convert_thousand_decimal_separators=False),
-        #'total_issued_shares': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Fornecimento total</div>', 'Fornecimento máximo</div>', [ ticker ]), 'popover-base"><span>', '</span>'), should_convert_thousand_decimal_separators=False),
+        #'total_issued_shares': lambda: multiply_by_unit(get_substring(get_substring(html_page, 'Fornecimento total</div>', 'Fornecimento máximo</div>', [ code ]), 'popover-base"><span>', '</span>'), should_convert_thousand_decimal_separators=False),
         'variation_12m': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage30d":', ','), should_convert_thousand_decimal_separators=False),
         'variation_30d': lambda: text_to_number(get_substring(html_page, '"priceChangePercentage1y":', ','), should_convert_thousand_decimal_separators=False),
     }
@@ -254,7 +254,7 @@ def _convert_coinmarketcap_cripto_data(html_page, json_historical_data, info_nam
 
     return final_data
 
-def _get_data_from_coinmarketcap(name, ticker, info_names):
+def _get_data_from_coinmarketcap(name, code, info_names):
     try:
         headers = {
           'accept': '*/*',
@@ -288,12 +288,12 @@ def _get_data_from_coinmarketcap(name, ticker, info_names):
         converted_data = _convert_coinmarketcap_cripto_data(html_page, json_historical_data, info_names)
         log_debug(f'Converted fresh Coin Market Cap data: {converted_data}')
         return converted_data
-    except Exception as error:
+    except:
         log_error(f'Error fetching data from Coin Market Cap for "{name}": {traceback.format_exc()}')
         return None
 
-def _get_data_from_all_sources(name, ticker, info_names):
-    data_binance = _get_data_from_binance(name, ticker, info_names)
+def _get_data_from_all_sources(name, code, info_names):
+    data_binance = _get_data_from_binance(name, code, info_names)
     log_info(f'Data from Binance: {data_binance}')
 
     missing_binance_infos = filter_remaining_infos(data_binance, info_names)
@@ -302,7 +302,7 @@ def _get_data_from_all_sources(name, ticker, info_names):
     if data_binance and not missing_binance_infos:
         return data_binance
 
-    data_coinmarketcap = _get_data_from_coinmarketcap(name, ticker, missing_binance_infos or info_names)
+    data_coinmarketcap = _get_data_from_coinmarketcap(name, code, missing_binance_infos or info_names)
     log_info(f'Data from Coin Market Cap: {data_coinmarketcap}')
 
     combined_data, missing_combined_infos = combine_data(data_binance, data_coinmarketcap, info_names)
@@ -311,7 +311,7 @@ def _get_data_from_all_sources(name, ticker, info_names):
     if combined_data and not missing_combined_infos:
         return combined_data
 
-    data_investidor_10 = _get_data_from_investidor10(name, ticker, missing_combined_infos or info_names)
+    data_investidor_10 = _get_data_from_investidor10(name, code, missing_combined_infos or info_names)
     log_info(f'Data from Investidor 10: {data_investidor_10}')
 
     if not data_investidor_10:
@@ -319,30 +319,30 @@ def _get_data_from_all_sources(name, ticker, info_names):
 
     return { **combined_data, **data_investidor_10 }
 
-def _get_data_from_sources(name, ticker, source, info_names):
+def _get_data_from_sources(name, code, source, info_names):
     SOURCES = {
         VALID_CRIPTO_SOURCES['BINANCE_SOURCE']: _get_data_from_binance,
         VALID_CRIPTO_SOURCES['INVESTIDOR10_SOURCE']: _get_data_from_investidor10,
         VALID_CRIPTO_SOURCES['COINMARKETCAP_SOURCE']: _get_data_from_coinmarketcap
     }
-    log_debug(f'----->source: {source}, found: {SOURCES.get(source)}')
-    fetch_function = SOURCES.get(source, _get_data_from_all_sources)
-    return fetch_function(name, ticker, info_names)
 
-def get_cripto_data(name, ticker, source, info_names, can_use_cache):
+    fetch_function = SOURCES.get(source, _get_data_from_all_sources)
+    return fetch_function(name, code, info_names)
+
+def get_cripto_data(name, code, source, info_names, can_use_cache):
     cached_data = get_data_from_cache(name, CACHE_FILE_CRIPTO, info_names, can_use_cache)
 
     SHOULD_UPDATE_CACHE = True
 
     if not can_use_cache:
-        return not SHOULD_UPDATE_CACHE, _get_data_from_sources(name, ticker, source, info_names)
+        return not SHOULD_UPDATE_CACHE, _get_data_from_sources(name, code, source, info_names)
 
     missing_cache_info_names = filter_remaining_infos(cached_data, info_names)
 
     if not missing_cache_info_names:
         return not SHOULD_UPDATE_CACHE, cached_data
 
-    source_data = _get_data_from_sources(name, ticker, source, missing_cache_info_names)
+    source_data = _get_data_from_sources(name, code, source, missing_cache_info_names)
 
     if cached_data and source_data:
         return SHOULD_UPDATE_CACHE, { **cached_data, **source_data }
