@@ -1,0 +1,2 @@
+# multiAssetCrawler
+API responsible for collecting over the internet, standardizing, and making available data from multiple classes of financial assets, including Ações (BR Stocks), Global Stocks, FIIs (BR REITs), REITs, ETFs and Cryptocurrencies
