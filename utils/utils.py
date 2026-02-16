@@ -1,7 +1,7 @@
 import re
 import requests
 
-from log.log_manager import log_info, log_debug
+from log.log_manager import log_debug
 
 def get_substring(text, start_text, end_text, replace_by_paterns=[], should_remove_tags=False):
     start_index = text.find(start_text)

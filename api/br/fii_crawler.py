@@ -1,16 +1,21 @@
-import ast
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime
 from html import unescape
 import json
-import os
-import re
 import traceback
 
-from log.log_manager import log_error, log_info, log_debug
-from utils.utils import get_substring, text_to_number, request_get
+from cache.cache_manager import CACHE_FILE_FII, get_data_from_cache
+from log.log_manager import log_debug, log_error, log_info
+from utils.utils import (
+    combine_data,
+    filter_remaining_infos,
+    get_substring,
+    multiply_by_unit,
+    request_get,
+    text_to_number,
+)
 
-VALID_SOURCES = {
+VALID_FII_SOURCES = {
     'ALL_SOURCE': 'all',
     'BMFBOVESPA_SOURCE': 'bmfbovespa',
     'FIIS_SOURCE': 'fiis',
@@ -19,7 +24,7 @@ VALID_SOURCES = {
     'INVESTIDOR10_SOURCE': 'investidor10'
 }
 
-VALID_INFOS = [
+VALID_FII_INFOS = [
     'actuation',
     'assets_value',
     'avg_price',
@@ -63,7 +68,7 @@ investidor_10_preloaded_data = (None, None)
 fundamentus_preloaded_data = (None, None)
 fiis_preloaded_data = (None, None)
 
-def convert_bmfbovespa_data(IME_doc, ITE_doc, RA_docs, cnpj, info_names):
+def _convert_bmfbovespa_data(IME_doc, ITE_doc, RA_docs, cnpj, info_names):
     patterns_to_remove = [
         '</b>',
         '</span>',
@@ -160,7 +165,7 @@ def convert_bmfbovespa_data(IME_doc, ITE_doc, RA_docs, cnpj, info_names):
 
     return final_data
 
-def fetch_documents(cnpj, document_configs, info_selector=None):
+def _fetch_documents(cnpj, document_configs):
     headers = {
         'Accept': 'application/json, text/javascript, */*; q=0.01, text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
@@ -196,25 +201,25 @@ def fetch_documents(cnpj, document_configs, info_selector=None):
         log_error(f'Error fetching all {document_configs["type"]} document for {cnpj}: {traceback.format_exc()}')
         return None
 
-def get_informe_mensal_estruturado_docs(cnpj):
+def _get_informe_mensal_estruturado_docs(cnpj):
     doc_configs = {
         'd': 3,
         'idCategoriaDocumento': 6,
         'idTipoDocumento': 40,
         'type': 'Informe Mensal Estruturado'
     }
-    return fetch_documents(cnpj, doc_configs)
+    return _fetch_documents(cnpj, doc_configs)
 
-def get_informe_trimestral_estruturado_docs(cnpj):
+def _get_informe_trimestral_estruturado_docs(cnpj):
     doc_configs = {
         'd': 4,
         'idCategoriaDocumento': 6,
         'idTipoDocumento': 45,
         'type': 'Informe Trimestral Estruturado'
     }
-    return fetch_documents(cnpj, doc_configs)
+    return _fetch_documents(cnpj, doc_configs)
 
-def get_rendimentos_amortizacoes_docs(cnpj):
+def _get_rendimentos_amortizacoes_docs(cnpj):
     today = datetime.now()
     today_day_month = f'{today.day if today.day >= 10 else f"0{today.day}"}%2F{today.month if today.month >= 10 else f"0{today.month}"}'
 
@@ -228,7 +233,7 @@ def get_rendimentos_amortizacoes_docs(cnpj):
         'year': today.year
     }
 
-    RA_docs = fetch_documents(cnpj, doc_configs)
+    RA_docs = _fetch_documents(cnpj, doc_configs)
 
     pattern_to_remove = '</td><td><span class="dado-valores">'
 
@@ -236,7 +241,7 @@ def get_rendimentos_amortizacoes_docs(cnpj):
 
     return simplified_RA_doc
 
-def get_cnpj_from_investidor10(ticker):
+def _get_cnpj_from_investidor10(ticker):
     global investidor_10_preloaded_data
 
     patterns_to_remove = [ '<span>', '</span>', '<div class="value">' ]
@@ -264,7 +269,7 @@ def get_cnpj_from_investidor10(ticker):
         log_error(f'Error fetching CNPJ on Investidor 10 for "{ticker}": {traceback.format_exc()}')
         return None
 
-def get_cnpj_from_fiis(ticker):
+def _get_cnpj_from_fiis(ticker):
     global fiis_preloaded_data
 
     try:
@@ -290,7 +295,7 @@ def get_cnpj_from_fiis(ticker):
         log_error(f'Error fetching CNPJ on FIIs for "{ticker}": {traceback.format_exc()}')
         return None
 
-def get_cnpj_from_fundamentus(ticker):
+def _get_cnpj_from_fundamentus(ticker):
     global fundamentus_preloaded_data
 
     try:
@@ -319,23 +324,23 @@ def get_cnpj_from_fundamentus(ticker):
         log_error(f'Error fetching CNPJ on Fundamentus for "{ticker}": {traceback.format_exc()}')
         return None
 
-def get_data_from_bmfbovespa(ticker, info_names):
+def _get_data_from_bmfbovespa(ticker, info_names):
     try:
         cnpj = (
-            get_cnpj_from_fundamentus(ticker) or
-            get_cnpj_from_fiis(ticker) or
-            get_cnpj_from_investidor10(ticker)
+            _get_cnpj_from_fundamentus(ticker) or
+            _get_cnpj_from_fiis(ticker) or
+            _get_cnpj_from_investidor10(ticker)
         )
 
         if not cnpj:
             log_error(f'No CNPJ found for "{ticker}"')
             return None
 
-        informe_mensal_estruturado_docs = get_informe_mensal_estruturado_docs(cnpj)
-        informe_trimestral_estruturado_docs = get_informe_trimestral_estruturado_docs(cnpj)
-        rendimentos_amortizacoes_docs = get_rendimentos_amortizacoes_docs(cnpj)
+        informe_mensal_estruturado_docs = _get_informe_mensal_estruturado_docs(cnpj)
+        informe_trimestral_estruturado_docs = _get_informe_trimestral_estruturado_docs(cnpj)
+        rendimentos_amortizacoes_docs = _get_rendimentos_amortizacoes_docs(cnpj)
 
-        converted_data = convert_bmfbovespa_data(
+        converted_data = _convert_bmfbovespa_data(
             informe_mensal_estruturado_docs,
             informe_trimestral_estruturado_docs,
             rendimentos_amortizacoes_docs,
@@ -348,7 +353,7 @@ def get_data_from_bmfbovespa(ticker, info_names):
         log_error(f'Error fetching data on BM & FBovespa for "{ticker}": {traceback.format_exc()}')
         return None
 
-def convert_fundamentus_data(data, historical_prices, info_names):
+def _convert_fundamentus_data(data, historical_prices, info_names):
     patterns_to_remove = [
         '</font>',
         '</span>',
@@ -421,7 +426,7 @@ def convert_fundamentus_data(data, historical_prices, info_names):
 
     return final_data
 
-def get_data_from_fundamentus(ticker, info_names):
+def _get_data_from_fundamentus(ticker, info_names):
     global fundamentus_preloaded_data
 
     headers = {
@@ -449,14 +454,14 @@ def get_data_from_fundamentus(ticker, info_names):
         return historical_prices
 
     try:
-        converted_data = convert_fundamentus_data(get_fundamentus_html_page(), get_fundamentus_historical_prices(), info_names)
+        converted_data = _convert_fundamentus_data(get_fundamentus_html_page(), get_fundamentus_historical_prices(), info_names)
         log_debug(f'Converted Fundamentus data: {converted_data}')
         return converted_data
     except:
         log_error(f'Error fetching data on Fundamentus for "{ticker}": {traceback.format_exc()}')
         return None
 
-def convert_fiis_data(data, info_names):
+def _convert_fiis_data(data, info_names):
     ALL_INFO = {
         'actuation': lambda: data['category'][0] if 'valor' in data['meta'] else None,
         'assets_value': lambda: None,
@@ -501,12 +506,12 @@ def convert_fiis_data(data, info_names):
 
     return final_data
 
-def get_data_from_fiis(ticker, info_names):
+def _get_data_from_fiis(ticker, info_names):
     global fiis_preloaded_data
 
     try:
         if fiis_preloaded_data[1] and ticker == fiis_preloaded_data[0]:
-            converted_data = convert_fiis_data(fiis_preloaded_data[1], info_names)
+            converted_data = _convert_fiis_data(fiis_preloaded_data[1], info_names)
             log_debug(f'Converted preloaded FIIs data: {converted_data}')
             return converted_data
 
@@ -525,14 +530,14 @@ def get_data_from_fiis(ticker, info_names):
 
         json_data = json.loads(raw_data.strip(';= '))['pagePostTerms']
 
-        converted_data = convert_fiis_data(json_data, info_names)
+        converted_data = _convert_fiis_data(json_data, info_names)
         log_debug(f'Converted fresh FIIs data: {converted_data}')
         return converted_data
     except:
         log_error(f'Error fetching data on FIIs for "{ticker}": {traceback.format_exc()}')
         return None
 
-def convert_fundsexplorer_data(data, info_names):
+def _convert_fundsexplorer_data(data, info_names):
     ALL_INFO = {
         'actuation': lambda: data['category'][0] if 'valor' in data['meta'] else None,
         'assets_value': lambda: None,
@@ -577,7 +582,7 @@ def convert_fundsexplorer_data(data, info_names):
 
     return final_data
 
-def get_data_from_fundsexplorer(ticker, info_names):
+def _get_data_from_fundsexplorer(ticker, info_names):
     try:
         headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -595,14 +600,14 @@ def get_data_from_fundsexplorer(ticker, info_names):
 
         json_data = json.loads(raw_data.strip(';= '))['pagePostTerms']
 
-        converted_data = convert_fundsexplorer_data(json_data, info_names)
+        converted_data = _convert_fundsexplorer_data(json_data, info_names)
         log_debug(f'Converted Fundsexplorer: {converted_data}')
         return converted_data
     except:
         log_error(f'Error fetching data on Fundsexplorer for "{ticker}": {traceback.format_exc()}')
         return None
 
-def convert_investidor10_data(data, info_names):
+def _convert_investidor10_data(data, info_names):
     patterns_to_remove = [
         '</div>',
         '</span>',
@@ -613,19 +618,6 @@ def convert_investidor10_data(data, info_names):
         '<span class="value">',
         '<span>'
     ]
-
-    def multiply_by_unit(data):
-        if not data:
-            return None
-
-        if 'K' in data:
-            return text_to_number(data.replace('Mil', '').replace('K', '')) * 1_000
-        elif 'M' in data:
-            return text_to_number(data.replace('Milhão', '').replace('Milhões', '').replace('M', '')) * 1_000_000
-        elif 'B' in data:
-            return text_to_number(data.replace('Bilhão', '').replace('Bilhões', '').replace('B', '')) * 1_000_000_000
-
-        return text_to_number(data)
 
     count_pattern_on_text = lambda text, pattern: None if not text or not pattern else len(text.split(pattern))
 
@@ -673,12 +665,12 @@ def convert_investidor10_data(data, info_names):
 
     return final_data
 
-def get_data_from_investidor10(ticker, info_names):
+def _get_data_from_investidor10(ticker, info_names):
     global investidor_10_preloaded_data
 
     try:
         if investidor_10_preloaded_data[1] and ticker == investidor_10_preloaded_data[0]:
-            converted_data = convert_investidor10_data(investidor_10_preloaded_data[1], info_names)
+            converted_data = _convert_investidor10_data(investidor_10_preloaded_data[1], info_names)
             log_debug(f'Converted preloaded Investidor 10 data: {converted_data}')
             return converted_data
 
@@ -693,15 +685,15 @@ def get_data_from_investidor10(ticker, info_names):
         response = request_get(f'https://investidor10.com.br/fiis/{ticker}', headers)
         html_cropped_body = response.text[15898:]
 
-        converted_data = convert_investidor10_data(html_cropped_body, info_names)
+        converted_data = _convert_investidor10_data(html_cropped_body, info_names)
         log_debug(f'Converted fresh Investidor 10 data: {converted_data}')
         return converted_data
     except:
         log_error(f'Error fetching data on Investidor 10 for "{ticker}": {traceback.format_exc()}')
         return None
 
-def get_data_from_all_sources(ticker, info_names):
-    data_bmfbovespa = get_data_from_bmfbovespa(ticker, info_names)
+def _get_data_from_all_sources(ticker, info_names):
+    data_bmfbovespa = _get_data_from_bmfbovespa(ticker, info_names)
     log_info(f'Data from BM & FBovespa: {data_bmfbovespa}')
 
     missing_bmfbovespa_infos = filter_remaining_infos(data_bmfbovespa, info_names)
@@ -710,7 +702,7 @@ def get_data_from_all_sources(ticker, info_names):
     if data_bmfbovespa and not missing_bmfbovespa_infos:
         return data_bmfbovespa
 
-    data_fundamentus = get_data_from_fundamentus(ticker, missing_bmfbovespa_infos or info_names)
+    data_fundamentus = _get_data_from_fundamentus(ticker, missing_bmfbovespa_infos or info_names)
     log_info(f'Data from Fundamentus: {data_fundamentus}')
 
     combined_data, missing_combined_infos = combine_data(data_bmfbovespa, data_fundamentus, info_names)
@@ -719,7 +711,7 @@ def get_data_from_all_sources(ticker, info_names):
     if combined_data and not missing_combined_infos:
         return combined_data
 
-    data_fiis = get_data_from_fiis(ticker, missing_combined_infos or info_names)
+    data_fiis = _get_data_from_fiis(ticker, missing_combined_infos or info_names)
     log_info(f'Data from FIIs: {data_fiis}')
 
     combined_data, missing_combined_infos = combine_data(combined_data, data_fiis, info_names)
@@ -728,7 +720,7 @@ def get_data_from_all_sources(ticker, info_names):
     if combined_data and not missing_combined_infos:
         return combined_data
 
-    data_investidor_10 = get_data_from_investidor10(ticker, missing_combined_infos or info_names)
+    data_investidor_10 = _get_data_from_investidor10(ticker, missing_combined_infos or info_names)
     log_info(f'Data from Investidor 10: {data_investidor_10}')
 
     if not data_investidor_10:
@@ -738,18 +730,18 @@ def get_data_from_all_sources(ticker, info_names):
 
 def _get_data_from_sources(ticker, source, info_names):
     SOURCES = {
-        VALID_SOURCES['BMFBOVESPA_SOURCE']: get_data_from_bmfbovespa,
-        VALID_SOURCES['FIIS_SOURCE']: get_data_from_fiis,
-        VALID_SOURCES['FUNDAMENTUS_SOURCE']: get_data_from_fundamentus,
-        VALID_SOURCES['FUNDSEXPLORER_SOURCE']: get_data_from_fundsexplorer,
-        VALID_SOURCES['INVESTIDOR10_SOURCE']: get_data_from_investidor10
+        VALID_FII_SOURCES['BMFBOVESPA_SOURCE']: _get_data_from_bmfbovespa,
+        VALID_FII_SOURCES['FIIS_SOURCE']: _get_data_from_fiis,
+        VALID_FII_SOURCES['FUNDAMENTUS_SOURCE']: _get_data_from_fundamentus,
+        VALID_FII_SOURCES['FUNDSEXPLORER_SOURCE']: _get_data_from_fundsexplorer,
+        VALID_FII_SOURCES['INVESTIDOR10_SOURCE']: _get_data_from_investidor10
     }
 
-    fetch_function = SOURCES.get(source, get_data_from_all_sources)
+    fetch_function = SOURCES.get(source, _get_data_from_all_sources)
     return fetch_function(ticker, info_names)
 
 def get_fii_data(ticker, source, info_names, can_use_cache):
-    cached_data = get_data_from_cache(ticker, info_names, can_use_cache)
+    cached_data = get_data_from_cache(ticker, CACHE_FILE_FII, info_names, can_use_cache)
 
     SHOULD_UPDATE_CACHE = True
 
