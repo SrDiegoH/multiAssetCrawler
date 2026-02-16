@@ -36,21 +36,34 @@ def text_to_number(text, should_convert_thousand_decimal_separators=True, conver
 
         if should_convert_thousand_decimal_separators:
             text = text.replace('.','').replace(',','.')
+        else:
+            text = text.replace(',','')
 
         if '%' in text:
             return float(text.replace('%', '').strip()) / (100 if convert_percent_to_decimal else 1)
 
         if 'R$' in text:
             text = text.replace('R$', '')
+        elif 'US$' in text:
+            text = text.replace('US$', '')
+        elif '$' in text:
+            text = text.replace('$', '')
 
         return float(text.strip())
     except:
         return 0
 
-def request_get(url, headers=None):
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
+def multiply_by_unit(data, should_convert_thousand_decimal_separators=True, convert_percent_to_decimal=False):
+    if not data:
+        return None
 
-    log_debug(f'Response from {url} : {response}')
+    if 'K' in data:
+        return text_to_number(data.replace('K', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000
+    elif 'M' in data:
+        return text_to_number(data.replace('Milhões', '').replace('Millions', '').replace('M', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000_000
+    elif 'B' in data:
+        return text_to_number(data.replace('Bilhões', '').replace('Billions', '').replace('B', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000_000_000
+    elif 'T' in data:
+        return text_to_number(data.replace('Trilhões', '').replace('Trillions', '').replace('T', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000_000_000_000
 
-    return response
+    return text_to_number(data, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
