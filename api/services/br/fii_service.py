@@ -658,7 +658,7 @@ def _convert_investidor10_data(data, info_names):
         'type': lambda: get_substring(data, 'TIPO DE FUNDO', '<div class=\'cell\'>', patterns_to_remove),
         'vacancy': lambda: text_to_number(get_substring(data, 'VACÂNCIA', '<div class=\'cell\'>', patterns_to_remove)),
         'variation_12m': lambda: text_to_number(get_substring(data, 'title="Variação (12M)">VARIAÇÃO (12M)</span>', '</span>', patterns_to_remove)),
-        'variation_30d': lambda: None
+        'variation_30d': lambda: text_to_number(get_substring(data, '>30</div>', '</div>'))
     }
 
     final_data = { info: ALL_INFO[info]() for info in info_names }

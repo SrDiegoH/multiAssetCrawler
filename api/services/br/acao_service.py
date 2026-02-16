@@ -309,7 +309,7 @@ def _convert_investidor10_data(page, dividends, historical_net_profit, info_name
         'sector':  lambda: get_substring(page, 'Segmento</span>', '</span>', patterns_to_remove),
         'total_issued_shares': lambda: get_detailed_value(get_substring(page, 'Nº total de papeis</span>', '</span>')),
         'variation_12m': lambda: text_to_number(get_substring(page, 'VARIAÇÃO (12M)</span>', '</span>', patterns_to_remove)),
-        'variation_30d': lambda: None
+        'variation_30d': lambda: text_to_number(get_substring(page, '>30</div>', '</div>'))
     }
 
     final_data = { info: ALL_INFO[info]() for info in info_names}
