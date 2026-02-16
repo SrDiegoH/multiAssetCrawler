@@ -1,6 +1,8 @@
 import re
 import requests
 
+from log.log_manager import log_info, log_debug
+
 def get_substring(text, start_text, end_text, replace_by_paterns=[], should_remove_tags=False):
     start_index = text.find(start_text)
     new_text = text[start_index:]
@@ -67,3 +69,43 @@ def multiply_by_unit(data, should_convert_thousand_decimal_separators=True, conv
         return text_to_number(data.replace('Trilhões', '').replace('Trillions', '').replace('T', ''), should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal) * 1_000_000_000_000
 
     return text_to_number(data, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
+
+def request_get(url, headers=None):
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    log_debug(f'Response from {url} : {response}')
+
+    return response
+
+def filter_remaining_infos(data, info_names, default_info_names=None):
+    if not data:
+        return info_names
+
+    missing_info = [ info for info in info_names if info in data and data[info] is None ]
+
+    return missing_info if missing_info else default_info_names
+
+def combine_data(first_dict, second_dict, info_names):
+    if first_dict and second_dict:
+        combined_dict = {**first_dict, **second_dict}
+        log_debug(f'Data from combined Frist and Second Dictionaries: {combined_dict}')
+    elif first_dict:
+        combined_dict = first_dict
+        log_debug(f'Data from First Dictionary only: {combined_dict}')
+    elif second_dict:
+        combined_dict = second_dict
+        log_debug(f'Data from Second Dictionary only: {combined_dict}')
+    else:
+        combined_dict = {}
+        log_debug('No combined data')
+
+    missing_combined_infos = filter_remaining_infos(combined_dict, info_names)
+    log_debug(f'Missing info from Combined data: {missing_combined_infos}')
+    return combined_dict, missing_combined_infos
+
+def get_parameter_info(params, name, default=None):
+    return params.get(name, default).replace(' ', '').lower()
+
+def get_cache_parameter_info(params, name, default='0'):
+    return get_parameter_info(params, name, default) in { '1', 's', 'sim', 't', 'true', 'y', 'yes' }
