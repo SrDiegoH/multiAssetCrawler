@@ -24,7 +24,7 @@ def crawl_fii_data(ticker):
     ticker = ticker.upper()
 
     raw_source = get_parameter_info(request.args, 'source', VALID_FII_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_FII_SOURCES.values() else VALID_FII_SOURCES['ALL_SOURCE']
+    source = raw_source if raw_source in VALID_FII_SOURCES.keys() else VALID_FII_SOURCES['ALL_SOURCE']
 
     raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_FII_INFOS ]
     info_names = raw_info_names if len(raw_info_names) else VALID_FII_INFOS
@@ -55,7 +55,7 @@ def crawl_acao_data(ticker):
     ticker = ticker.upper()
 
     raw_source = get_parameter_info(request.args, 'source', VALID_ACAO_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_ACAO_SOURCES.values() else VALID_ACAO_SOURCES['ALL_SOURCE']
+    source = raw_source if raw_source in VALID_ACAO_SOURCES.keys() else VALID_ACAO_SOURCES['ALL_SOURCE']
 
     raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_ACAO_INFOS ]
     info_names = raw_info_names if len(raw_info_names) else VALID_ACAO_INFOS
@@ -87,7 +87,7 @@ def crawl_cripto_data(name, ticker):
     ticker = ticker.upper()
 
     raw_source = get_parameter_info(request.args, 'source', VALID_CRIPTO_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_CRIPTO_SOURCES.values() else VALID_CRIPTO_SOURCES['ALL_SOURCE']
+    source = raw_source if raw_source in VALID_CRIPTO_SOURCES.keys() else VALID_CRIPTO_SOURCES['ALL_SOURCE']
 
     raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_CRIPTO_INFOS ]
     info_names = raw_info_names if len(raw_info_names) else VALID_CRIPTO_INFOS
