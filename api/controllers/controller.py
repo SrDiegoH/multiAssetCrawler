@@ -189,10 +189,11 @@ def info():
         By default, cached data is used. To fetch fresh data, pass the query parameter <code>should_use_cache</code> as <strong>0</strong>.
         To clear cached data for a specific asset, pass the query parameter <code>should_clear_cached_data</code> as <strong>1</strong>.
         To delete all cached data for a specific asset class, pass the query parameter <code>should_delete_all_cache</code> as <strong>1</strong>.
+        <em>PS: It is highly recommended to use caching to prevent abuse of sources.</em>
         </br></br>
-        By default, all valid information is returned. To filter specific informaton, pass the <strong>informaton names</strong> as a query parameter separeted by <code>,</code> (comma).
+        By default, all valid information is returned. To filter specific informaton, pass the <strong>informaton names</strong> as a query parameter separeted by <code>,</code> (comma).</b>
         To see all valid information names for a specific asset class, access <code>valid-infos/</code> and pass the <strong>asset name</strong> in the path.
         </br></br>
-        By default, data from all sources is returned. To crawl from a specific source, pass the <strong>source names</strong> as a query parameter.
+        By default, data from all sources is returned. To crawl from a specific source, pass the <strong>source names</strong> as a query parameter.</b>
         To see all valid sources for a specific asset class, access <code>valid-sources/</code> and pass the <strong>asset name</strong> in the path.
     ''', 200
