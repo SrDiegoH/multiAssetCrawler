@@ -12,7 +12,7 @@ from utils.utils import (
     text_to_number,
 )
 
-VALID_CRIPTO_INFOS = {
+VALID_CRIPTO_SOURCES = {
     'ALL_SOURCE': 'all',
     'BINANCE_SOURCE': 'binance',
     'INVESTIDOR10_SOURCE': 'investidor10',
@@ -322,9 +322,9 @@ def _get_data_from_all_sources(name, ticker, info_names):
 
 def _get_data_from_sources(name, ticker, source, info_names):
     SOURCES = {
-        VALID_CRIPTO_INFOS['BINANCE_SOURCE']: _get_data_from_binance,
-        VALID_CRIPTO_INFOS['INVESTIDOR10_SOURCE']: _get_data_from_investidor10,
-        VALID_CRIPTO_INFOS['COINMARKETCAP_SOURCE']: _get_data_from_coinmarketcap
+        VALID_CRIPTO_SOURCES['BINANCE_SOURCE']: _get_data_from_binance,
+        VALID_CRIPTO_SOURCES['INVESTIDOR10_SOURCE']: _get_data_from_investidor10,
+        VALID_CRIPTO_SOURCES['COINMARKETCAP_SOURCE']: _get_data_from_coinmarketcap
     }
 
     fetch_function = SOURCES.get(source, _get_data_from_all_sources)
