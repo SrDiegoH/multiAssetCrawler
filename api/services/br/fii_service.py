@@ -64,9 +64,9 @@ VALID_FII_INFOS = [
     'variation_30d'
 ]
 
-investidor_10_preloaded_data = (None, None)
-fundamentus_preloaded_data = (None, None)
-fiis_preloaded_data = (None, None)
+_investidor_10_preloaded_data = (None, None)
+_fundamentus_preloaded_data = (None, None)
+_fiis_preloaded_data = (None, None)
 
 def _convert_bmfbovespa_data(IME_doc, ITE_doc, RA_docs, cnpj, info_names):
     patterns_to_remove = [
@@ -242,7 +242,7 @@ def _get_rendimentos_amortizacoes_docs(cnpj):
     return simplified_RA_doc
 
 def _get_cnpj_from_investidor10(ticker):
-    global investidor_10_preloaded_data
+    global _investidor_10_preloaded_data
 
     patterns_to_remove = [ '<span>', '</span>', '<div class="value">' ]
 
@@ -261,16 +261,16 @@ def _get_cnpj_from_investidor10(ticker):
         cnpj = get_substring(html_cropped_body, 'CNPJ', '</div>', patterns_to_remove)
 
         if cnpj:
-          investidor_10_preloaded_data = (ticker, html_cropped_body)
+          _investidor_10_preloaded_data = (ticker, html_cropped_body)
 
         return cnpj
     except:
-        investidor_10_preloaded_data = (None, None)
+        _investidor_10_preloaded_data = (None, None)
         log_error(f'Error fetching CNPJ on Investidor 10 for "{ticker}": {traceback.format_exc()}')
         return None
 
 def _get_cnpj_from_fiis(ticker):
-    global fiis_preloaded_data
+    global _fiis_preloaded_data
 
     try:
         headers = {
@@ -287,16 +287,16 @@ def _get_cnpj_from_fiis(ticker):
         cnpj = get_substring(html_page, 'cnpj":"', '"', '\\')
 
         if cnpj:
-          fiis_preloaded_data = (ticker, html_page)
+          _fiis_preloaded_data = (ticker, html_page)
 
         return cnpj
     except:
-        fiis_preloaded_data = (None, None)
+        _fiis_preloaded_data = (None, None)
         log_error(f'Error fetching CNPJ on FIIs for "{ticker}": {traceback.format_exc()}')
         return None
 
 def _get_cnpj_from_fundamentus(ticker):
-    global fundamentus_preloaded_data
+    global _fundamentus_preloaded_data
 
     try:
         headers = {
@@ -316,11 +316,11 @@ def _get_cnpj_from_fundamentus(ticker):
         cnpj = get_substring(html_page, 'abrirGerenciadorDocumentosCVM?cnpjFundo=', '">Pesquisar Documentos', '#')
 
         if cnpj:
-          fundamentus_preloaded_data = (ticker, html_page)
+          _fundamentus_preloaded_data = (ticker, html_page)
 
         return cnpj
     except:
-        fundamentus_preloaded_data = (None, None)
+        _fundamentus_preloaded_data = (None, None)
         log_error(f'Error fetching CNPJ on Fundamentus for "{ticker}": {traceback.format_exc()}')
         return None
 
@@ -427,7 +427,7 @@ def _convert_fundamentus_data(data, historical_prices, info_names):
     return final_data
 
 def _get_data_from_fundamentus(ticker, info_names):
-    global fundamentus_preloaded_data
+    global _fundamentus_preloaded_data
 
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -438,9 +438,9 @@ def _get_data_from_fundamentus(ticker, info_names):
     }
 
     def get_fundamentus_html_page():
-        if fundamentus_preloaded_data[1] and ticker == fundamentus_preloaded_data[0]:
+        if _fundamentus_preloaded_data[1] and ticker == _fundamentus_preloaded_data[0]:
             log_debug(f'Using preloaded Fundamentus data')
-            return fundamentus_preloaded_data[1]
+            return _fundamentus_preloaded_data[1]
 
         response = request_get(f'https://fundamentus.com.br/detalhes.php?papel={ticker}', headers)
         html_page = response.text
@@ -507,11 +507,11 @@ def _convert_fiis_data(data, info_names):
     return final_data
 
 def _get_data_from_fiis(ticker, info_names):
-    global fiis_preloaded_data
+    global _fiis_preloaded_data
 
     try:
-        if fiis_preloaded_data[1] and ticker == fiis_preloaded_data[0]:
-            converted_data = _convert_fiis_data(fiis_preloaded_data[1], info_names)
+        if _fiis_preloaded_data[1] and ticker == _fiis_preloaded_data[0]:
+            converted_data = _convert_fiis_data(_fiis_preloaded_data[1], info_names)
             log_debug(f'Converted preloaded FIIs data: {converted_data}')
             return converted_data
 
@@ -666,11 +666,11 @@ def _convert_investidor10_data(data, info_names):
     return final_data
 
 def _get_data_from_investidor10(ticker, info_names):
-    global investidor_10_preloaded_data
+    global _investidor_10_preloaded_data
 
     try:
-        if investidor_10_preloaded_data[1] and ticker == investidor_10_preloaded_data[0]:
-            converted_data = _convert_investidor10_data(investidor_10_preloaded_data[1], info_names)
+        if _investidor_10_preloaded_data[1] and ticker == _investidor_10_preloaded_data[0]:
+            converted_data = _convert_investidor10_data(_investidor_10_preloaded_data[1], info_names)
             log_debug(f'Converted preloaded Investidor 10 data: {converted_data}')
             return converted_data
 
