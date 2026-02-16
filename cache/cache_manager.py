@@ -118,11 +118,11 @@ def preprocess_cache(id, file, should_delete_all_cache, should_clear_cached_data
 
     return can_use_cache
 
-def get_data_from_cache(id, info_names, can_use_cache):
+def get_data_from_cache(id, file, info_names, can_use_cache):
     if not can_use_cache:
         return None
 
-    cached_data = _read_cache(id)
+    cached_data = _read_cache(id, file)
     if not cached_data:
         return None
 
