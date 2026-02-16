@@ -68,7 +68,7 @@ def _clear_cache(id, file):
 
     log_info(f'Cache cleaning completed for "{id}"')
 
-def read_cache(id, file):
+def _read_cache(id, file):
     if not _cache_exists(file):
         return None
 
@@ -117,3 +117,16 @@ def preprocess_cache(id, file, should_delete_all_cache, should_clear_cached_data
     can_use_cache = should_use_cache and not (should_delete_all_cache or should_clear_cached_data)
 
     return can_use_cache
+
+def get_data_from_cache(id, info_names, can_use_cache):
+    if not can_use_cache:
+        return None
+
+    cached_data = _read_cache(id)
+    if not cached_data:
+        return None
+
+    filtered_data = { key: cached_data[key] for key in info_names if key in cached_data }
+    log_info(f'Data from Cache: {filtered_data}')
+
+    return filtered_data
