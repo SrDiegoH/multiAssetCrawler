@@ -17,7 +17,7 @@ from cache.cache_manager import (
     upsert_cache,
 )
 from log.log_manager import log_debug
-from utils.utils import get_cache_parameter_info, get_parameter_info, VALID_ASSET_CLASSES_MAPPER
+from utils.utils import get_cache_parameter_info, get_parameter_info
 
 controller_blue_print = Blueprint("controller", __name__, url_prefix="/")
 
