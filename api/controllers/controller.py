@@ -255,9 +255,9 @@ def _resolve_asset_class(asset_class, is_info_request=True):
     return jsonify({ 'error': 'Not valid Asset Class' }), 400
 
 @controller_blue_print.route('/valid-infos/<asset_class>', methods=['GET'])
-def valid_info(asset_class):
+def valid_infos(asset_class):
     return _resolve_asset_class(asset_class)
 
 @controller_blue_print.route('/valid-sources/<asset_class>', methods=['GET'])
-def valid_info(asset_class):
+def valid_sources(asset_class):
     return _resolve_asset_class(asset_class, is_info_request=False)
