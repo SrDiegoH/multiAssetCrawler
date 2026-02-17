@@ -58,13 +58,12 @@ def get_substring(text, start_text, end_text, replace_by_patterns=None, should_r
 
     clean_text = extracted.replace('\n', '').replace('\t', '').strip()
 
-    if should_remove_tags:
-        no_tags_text = _TAG_REGEX.sub('', clean_text)
+    no_tags_text = _TAG_REGEX.sub('', clean_text) if should_remove_tags else clean_text
 
     for pattern in replace_by_patterns:
-        final_text = no_tags_text.replace(pattern, '')
+        no_tags_text = no_tags_text.replace(pattern, '')
 
-    return final_text.strip() or None
+    return no_tags_text.strip() or None
 
 def text_to_number(text, should_convert_thousand_decimal_separators=True, convert_percent_to_decimal=False):
     if text is None:

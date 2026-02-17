@@ -4,12 +4,12 @@ import os
 
 from log.log_manager import log_info, log_debug
 
-CACHE_FILE_FII = '/tmp/fii_cache.txt'
 CACHE_FILE_ACAO = '/tmp/acao_cache.txt'
-CACHE_FILE_STOCK = '/tmp/stock_cache.txt'
-CACHE_FILE_REIT = '/tmp/reit_cache.txt'
-CACHE_FILE_ETF = '/tmp/etf_cache.txt'
 CACHE_FILE_CRIPTO = '/tmp/cripto_cache.txt'
+CACHE_FILE_ETF = '/tmp/etf_cache.txt'
+CACHE_FILE_FII = '/tmp/fii_cache.txt'
+CACHE_FILE_REIT = '/tmp/reit_cache.txt'
+CACHE_FILE_STOCK = '/tmp/stock_cache.txt'
 
 _CACHE_EXPIRY = timedelta(days=1)
 
