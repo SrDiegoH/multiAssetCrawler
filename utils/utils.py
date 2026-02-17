@@ -98,23 +98,32 @@ def multiply_by_unit(data, should_convert_thousand_decimal_separators=True, conv
     if not data:
         return None
 
+    log_debug(f'---> {data}')
+
     if not isinstance(data, str):
         return data
 
+    log_debug(f'---> {data}')
     text = data.strip().lower()
+    log_debug(f'----> {text}')
 
     for word, letter in _UNIT_WORDS.items():
         if word in text:
             text = text.replace(word, letter)
 
+    log_debug(f'-----> {text}')
     unit = text[-1]
+    log_debug(f'------> {unit}')
 
-    if unit in _UNIT_MULTIPLIERS:
+    if unit in _UNIT_MULTIPLIERS.keys():
+        log_debug(f'-------> {unit}')
         number_part = text[:-1].strip()
-        value = text_to_number(number_part, should_convert_thousand_decimal_separators, convert_percent_to_decimal)
+        log_debug(f'--------> {number_part}')
+        value = text_to_number(number_part, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
+        log_debug(f'---------> {value}')
         return value * _UNIT_MULTIPLIERS[unit]
 
-    return text_to_number(text, should_convert_thousand_decimal_separators, convert_percent_to_decimal)
+    return text_to_number(text, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
 
 def request_get(url, headers=None):
     response = requests.get(url, headers=headers)
