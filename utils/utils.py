@@ -72,11 +72,11 @@ def text_to_number(text, should_convert_thousand_decimal_separators=True, conver
     if not isinstance(text, str):
         return text
 
-    text = text.strip()
+    text = text.strip().lower()
     if not text:
         raise Exception()
 
-    for currency in ('R$', 'US$', '$'):
+    for currency in ('r$', 'us$', '$'):
         text = text.replace(currency, '')
 
     is_percent = '%' in text
