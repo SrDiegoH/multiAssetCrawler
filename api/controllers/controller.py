@@ -138,6 +138,7 @@ def info():
         </br></br>
         By default, data from all sources is returned. To crawl from a specific source, pass the <strong>source names</strong> as a query parameter.</b>
         To see all valid sources for a specific asset class, access <code>valid-sources/</code> and pass the <strong>asset name</strong> in the path.
+        <em>Note: It is highly recommended to use all available sources, once that a single source may not provide all the requested information.</em>
     ''', 200
 
 def _resolve_asset_class(asset_class, is_info_request=True):
