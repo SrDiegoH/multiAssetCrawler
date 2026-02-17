@@ -81,7 +81,7 @@ def _convert_investidor10_etf_data(html_page, json_dividends_data, info_names):
 
     ALL_INFO = {
         'actuation': lambda: None,
-        'assets_value': lambda: multiply_by_unit(get_substring(html_page, 'Capitalização</span>', '</span>', patterns_to_remove), should_convert_thousand_decimal_separators=False),
+        'assets_value': lambda: multiply_by_unit(get_substring(html_page, 'Capitalização</span>', '</span>', patterns_to_remove)),
         'avg_annual_dividends': lambda: (sum(dividend['price'] for dividend in json_dividends_data) / len(json_dividends_data)) if json_dividends_data else None,
         'avg_price': lambda: None,
         'beta': lambda: None,
