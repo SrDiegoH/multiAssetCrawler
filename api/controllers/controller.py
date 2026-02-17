@@ -17,7 +17,7 @@ from cache.cache_manager import (
     upsert_cache,
 )
 from log.log_manager import log_debug
-from utils.utils import get_cache_parameter_info, get_parameter_info
+from utils.utils import get_cache_parameter_info, get_parameter_info, VALID_ASSET_CLASSES_MAPPER
 
 controller_blue_print = Blueprint("controller", __name__, url_prefix="/")
 
@@ -212,11 +212,11 @@ def crawl_reit_data(ticker):
 def info():
     return '''
         To get <strong>Ações</strong> (Brazilian stocks) informations, access the <code>acao/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
+        To get <strong>Cryptocurrencies</strong> informations, access the <code>cripto/</code> endpoint and pass the <strong>name</strong> and <strong>code</strong> respectively in the path.</br>
+        To get <strong>ETFs</strong> informations, access the <code>etf/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
         To get <strong>FIIs</strong> (Brazilian REIT-like funds) informations, access the <code>fii/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
         To get <strong>Stocks</strong> informations, access the <code>stock/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
         To get <strong>REITs</strong> informations, access the <code>reit/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
-        To get <strong>ETFs</strong> informations, access the <code>etf/</code> endpoint and pass the <strong>ticker</strong> in the path.</br>
-        To get <strong>Cryptocurrencies</strong> informations, access the <code>cripto/</code> endpoint and pass the <strong>name</strong> and <strong>code</strong> respectively in the path.</br>
         </br></br>
         By default, cached data is used. To fetch fresh data, pass the query parameter <code>should_use_cache</code> as <strong>0</strong>.
         To clear cached data for a specific asset, pass the query parameter <code>should_clear_cached_data</code> as <strong>1</strong>.
@@ -229,3 +229,21 @@ def info():
         By default, data from all sources is returned. To crawl from a specific source, pass the <strong>source names</strong> as a query parameter.</b>
         To see all valid sources for a specific asset class, access <code>valid-sources/</code> and pass the <strong>asset name</strong> in the path.
     ''', 200
+
+def _resolve_asset_class(asset_class, is_info_request=True):
+    normalized = asset_class.strip().lower()
+    index = 0 if is_info_request else 1
+
+    for key, value in VALID_ASSET_CLASSES_MAPPER.items():
+        if key in normalized:
+            return jsonify(value[index]), 200
+
+    return jsonify({ 'error': 'Not valid Asset Class' }), 400
+
+@controller_blue_print.route('/valid-infos/<asset_class>', methods=['GET'])
+def valid_info(asset_class):
+    return _resolve_asset_class(asset_class)
+
+@controller_blue_print.route('/valid-sources/<asset_class>', methods=['GET'])
+def valid_info(asset_class):
+    return _resolve_asset_class(asset_class, is_info_request=False)

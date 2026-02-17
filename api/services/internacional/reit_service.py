@@ -90,7 +90,7 @@ def _convert_investidor10_reit_data(json_ticker_page, json_dividends_data, info_
         'equity_price': lambda: None,
         'equity_value': lambda: balance['total_equity'],
         'gross_margin': lambda: text_to_number(balance['gross_margin']),
-        'initial_date': lambda: json_ticker_page['start_year_on_reit_exchange'],
+        'initial_date': lambda: json_ticker_page['start_year_on_stock_exchange'],
         'latests_dividends': lambda: get_leatests_dividends(json_dividends_data),
         'link': lambda: None,
         'liquidity': lambda: balance['volume_avg'],

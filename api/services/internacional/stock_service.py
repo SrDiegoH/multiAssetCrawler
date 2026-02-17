@@ -131,7 +131,7 @@ def _get_stock_from_investidor10(ticker, info_names):
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 OPR/115.0.0.0',
         }
 
-        response = request_get(f'https://investidor10.com.br/stock/{ticker}', headers)
+        response = request_get(f'https://investidor10.com.br/stocks/{ticker}', headers)
         html_page =  response.text[15898:]
 
         json_data = get_substring(html_page, 'var mainTicker =', 'var ')[:-1]

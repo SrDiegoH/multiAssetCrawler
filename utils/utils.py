@@ -1,19 +1,23 @@
 import re
 import requests
 
+from api.services.internacional.cripto_service import VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES
+from api.services.internacional.etf_service import VALID_ETF_INFOS, VALID_ETF_SOURCES
+from api.services.internacional.stock_service import VALID_STOCK_INFOS, VALID_STOCK_SOURCES
+from api.services.internacional.reit_service import VALID_REIT_INFOS, VALID_REIT_SOURCES
+from api.services.nacional.acao_service import VALID_ACAO_INFOS, VALID_ACAO_SOURCES
+from api.services.nacional.fii_service import VALID_FII_INFOS, VALID_FII_SOURCES
 from log.log_manager import log_debug
 
+
+_ASSET_TYPES = [ 'REIT', 'STOCK', 'ETF' ]
 _TAG_REGEX = re.compile(r'<[^>]*>')
-
-_ASSET_TYPES = [ 'reit', 'stock', 'etf' ]
-
 _UNIT_MULTIPLIERS = {
     'k': 1_000,
     'm': 1_000_000,
     'b': 1_000_000_000,
     't': 1_000_000_000_000,
 }
-
 _UNIT_WORDS = {
     'milhões': 'm',
     'millions': 'm',
@@ -21,6 +25,19 @@ _UNIT_WORDS = {
     'billions': 'b',
     'trilhões': 't',
     'trillions': 't',
+}
+VALID_ASSET_CLASSES_MAPPER = {
+    'ação'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'acao'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'ações' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'acoes' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'cripto': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'cryptocurrency'  : (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'cryptocurrencies': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'etf'  : (VALID_ETF_INFOS, VALID_ETF_SOURCES),
+    'fii'  : (VALID_FII_INFOS, VALID_FII_SOURCES),
+    'stock': (VALID_STOCK_INFOS, VALID_STOCK_SOURCES),
+    'reit' : (VALID_REIT_INFOS, VALID_REIT_SOURCES),
 }
 
 """
@@ -98,29 +115,20 @@ def multiply_by_unit(data, should_convert_thousand_decimal_separators=True, conv
     if not data:
         return None
 
-    log_debug(f'---> {data}')
-
     if not isinstance(data, str):
         return data
 
-    log_debug(f'---> {data}')
     text = data.strip().lower()
-    log_debug(f'----> {text}')
 
     for word, letter in _UNIT_WORDS.items():
         if word in text:
             text = text.replace(word, letter)
 
-    log_debug(f'-----> {text}')
     unit = text[-1]
-    log_debug(f'------> {unit}')
 
     if unit in _UNIT_MULTIPLIERS.keys():
-        log_debug(f'-------> {unit}')
         number_part = text[:-1].strip()
-        log_debug(f'--------> {number_part}')
         value = text_to_number(number_part, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
-        log_debug(f'---------> {value}')
         return value * _UNIT_MULTIPLIERS[unit]
 
     return text_to_number(text, should_convert_thousand_decimal_separators=should_convert_thousand_decimal_separators, convert_percent_to_decimal=convert_percent_to_decimal)
@@ -167,7 +175,5 @@ def get_parameter_info(params, name, default=None):
 def get_cache_parameter_info(params, name, default='0'):
     return get_parameter_info(params, name, default) in { '1', 's', 'sim', 't', 'true', 'v', 'verdade', 'verdadeiro', 'y', 'yes' }
 
-def remove_type_from_name(text, types=None):
-    if not types:
-        types = _ASSET_TYPES
-    return re.sub(r'\b(' + '|'.join(types) + r')\b', '', text.lower()).strip()
+def remove_type_from_name(text):
+    return re.sub(r'\b(' + '|'.join(_ASSET_TYPES) + r')\b', '', text.upper()).strip()
