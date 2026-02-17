@@ -21,6 +21,20 @@ from utils.utils import get_cache_parameter_info, get_parameter_info, VALID_ASSE
 
 controller_blue_print = Blueprint("controller", __name__, url_prefix="/")
 
+_VALID_ASSET_CLASSES_MAPPER = {
+    'ação'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'acao'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'ações' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'acoes' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
+    'cripto': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'cryptocurrency'  : (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'cryptocurrencies': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
+    'etf'  : (VALID_ETF_INFOS, VALID_ETF_SOURCES),
+    'fii'  : (VALID_FII_INFOS, VALID_FII_SOURCES),
+    'stock': (VALID_STOCK_INFOS, VALID_STOCK_SOURCES),
+    'reit' : (VALID_REIT_INFOS, VALID_REIT_SOURCES),
+}
+
 @controller_blue_print.route('/acao/<ticker>', methods=['GET'])
 def crawl_acao_data(ticker):
     should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
@@ -234,7 +248,7 @@ def _resolve_asset_class(asset_class, is_info_request=True):
     normalized = asset_class.strip().lower()
     index = 0 if is_info_request else 1
 
-    for key, value in VALID_ASSET_CLASSES_MAPPER.items():
+    for key, value in _VALID_ASSET_CLASSES_MAPPER.items():
         if key in normalized:
             return jsonify(value[index]), 200
 

@@ -1,23 +1,19 @@
 import re
 import requests
 
-from api.services.internacional.cripto_service import VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES
-from api.services.internacional.etf_service import VALID_ETF_INFOS, VALID_ETF_SOURCES
-from api.services.internacional.stock_service import VALID_STOCK_INFOS, VALID_STOCK_SOURCES
-from api.services.internacional.reit_service import VALID_REIT_INFOS, VALID_REIT_SOURCES
-from api.services.nacional.acao_service import VALID_ACAO_INFOS, VALID_ACAO_SOURCES
-from api.services.nacional.fii_service import VALID_FII_INFOS, VALID_FII_SOURCES
 from log.log_manager import log_debug
 
-
 _ASSET_TYPES = [ 'REIT', 'STOCK', 'ETF' ]
+
 _TAG_REGEX = re.compile(r'<[^>]*>')
+
 _UNIT_MULTIPLIERS = {
     'k': 1_000,
     'm': 1_000_000,
     'b': 1_000_000_000,
     't': 1_000_000_000_000,
 }
+
 _UNIT_WORDS = {
     'milhões': 'm',
     'millions': 'm',
@@ -25,19 +21,6 @@ _UNIT_WORDS = {
     'billions': 'b',
     'trilhões': 't',
     'trillions': 't',
-}
-VALID_ASSET_CLASSES_MAPPER = {
-    'ação'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
-    'acao'  : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
-    'ações' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
-    'acoes' : (VALID_ACAO_INFOS, VALID_ACAO_SOURCES),
-    'cripto': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
-    'cryptocurrency'  : (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
-    'cryptocurrencies': (VALID_CRIPTO_INFOS, VALID_CRIPTO_SOURCES),
-    'etf'  : (VALID_ETF_INFOS, VALID_ETF_SOURCES),
-    'fii'  : (VALID_FII_INFOS, VALID_FII_SOURCES),
-    'stock': (VALID_STOCK_INFOS, VALID_STOCK_SOURCES),
-    'reit' : (VALID_REIT_INFOS, VALID_REIT_SOURCES),
 }
 
 """
