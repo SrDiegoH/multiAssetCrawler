@@ -35,26 +35,26 @@ _VALID_ASSET_CLASSES_MAPPER = {
     'reit' : (VALID_REIT_INFOS, VALID_REIT_SOURCES),
 }
 
-@controller_blue_print.route('/acao/<ticker>', methods=['GET'])
-def crawl_acao_data(ticker):
+
+def _crawl_data(ticker, VALID_INFOS, VALID_SOURCES, CACHE_FILE, get_data):
     should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
     should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
     should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
 
     ticker = ticker.upper()
 
-    raw_source = get_parameter_info(request.args, 'source', VALID_ACAO_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_ACAO_SOURCES.values() else VALID_ACAO_SOURCES['ALL_SOURCE']
+    raw_source = get_parameter_info(request.args, 'source', VALID_SOURCES['ALL_SOURCE'])
+    source = raw_source if raw_source in VALID_SOURCES.values() else VALID_SOURCES['ALL_SOURCE']
 
-    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_ACAO_INFOS ]
-    info_names = raw_info_names if len(raw_info_names) else VALID_ACAO_INFOS
+    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_INFOS ]
+    info_names = raw_info_names if len(raw_info_names) else VALID_INFOS
 
     log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
     log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
 
-    can_use_cache = preprocess_cache(ticker, CACHE_FILE_ACAO, should_delete_all_cache, should_clear_cached_data, should_use_cache)
+    can_use_cache = preprocess_cache(ticker, CACHE_FILE, should_delete_all_cache, should_clear_cached_data, should_use_cache)
 
-    should_update_cache, data = get_acao_data(ticker, source, info_names, can_use_cache)
+    should_update_cache, data = get_data(ticker, source, info_names, can_use_cache)
 
     log_debug(f'Final Data: {data}')
 
@@ -62,9 +62,13 @@ def crawl_acao_data(ticker):
         return jsonify({ 'error': 'No data found' }), 404
 
     if can_use_cache and should_update_cache:
-        upsert_cache(ticker, CACHE_FILE_ACAO, data)
+        upsert_cache(ticker, CACHE_FILE, data)
 
     return jsonify(data), 200
+
+@controller_blue_print.route('/acao/<ticker>', methods=['GET'])
+def crawl_acao_data(ticker):
+    return _crawl_data(ticker, VALID_ACAO_INFOS, VALID_ACAO_SOURCES, CACHE_FILE_ACAO, get_acao_data)
 
 @controller_blue_print.route('/cripto/<name>/<code>', methods=['GET'])
 def crawl_cripto_data(name, code):
@@ -100,127 +104,19 @@ def crawl_cripto_data(name, code):
 
 @controller_blue_print.route('/etf/<ticker>', methods=['GET'])
 def crawl_etf_data(ticker):
-    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
-    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
-    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
-
-    ticker = ticker.upper()
-
-    raw_source = get_parameter_info(request.args, 'source', VALID_ETF_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_ETF_SOURCES.values() else VALID_ETF_SOURCES['ALL_SOURCE']
-
-    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_ETF_INFOS ]
-    info_names = raw_info_names if len(raw_info_names) else VALID_ETF_INFOS
-
-    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
-    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
-
-    can_use_cache = preprocess_cache(ticker, CACHE_FILE_ETF, should_delete_all_cache, should_clear_cached_data, should_use_cache)
-
-    should_update_cache, data = get_etf_data(ticker, source, info_names, can_use_cache)
-
-    log_debug(f'Final Data: {data}')
-
-    if not data:
-        return jsonify({ 'error': 'No data found' }), 404
-
-    if can_use_cache and should_update_cache:
-        upsert_cache(ticker, CACHE_FILE_ETF, data)
-
-    return jsonify(data), 200
+    return _crawl_data(ticker, VALID_ETF_INFOS, VALID_ETF_SOURCES, CACHE_FILE_ETF, get_etf_data)
 
 @controller_blue_print.route('/fii/<ticker>', methods=['GET'])
 def crawl_fii_data(ticker):
-    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
-    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
-    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
-
-    ticker = ticker.upper()
-
-    raw_source = get_parameter_info(request.args, 'source', VALID_FII_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_FII_SOURCES.values() else VALID_FII_SOURCES['ALL_SOURCE']
-
-    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_FII_INFOS ]
-    info_names = raw_info_names if len(raw_info_names) else VALID_FII_INFOS
-
-    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
-    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
-
-    can_use_cache = preprocess_cache(ticker, CACHE_FILE_FII, should_delete_all_cache, should_clear_cached_data, should_use_cache)
-
-    should_update_cache, data = get_fii_data(ticker, source, info_names, can_use_cache)
-
-    log_debug(f'Final Data: {data}')
-
-    if not data:
-        return jsonify({ 'error': 'No data found' }), 404
-
-    if can_use_cache and should_update_cache:
-        upsert_cache(ticker, CACHE_FILE_FII, data)
-
-    return jsonify(data), 200
+    return _crawl_data(ticker, VALID_FII_INFOS, VALID_FII_SOURCES, CACHE_FILE_FII, get_fii_data)
 
 @controller_blue_print.route('/stock/<ticker>', methods=['GET'])
 def crawl_stock_data(ticker):
-    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
-    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
-    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
-
-    ticker = ticker.upper()
-
-    raw_source = get_parameter_info(request.args, 'source', VALID_STOCK_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_STOCK_SOURCES.values() else VALID_STOCK_SOURCES['ALL_SOURCE']
-
-    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_STOCK_INFOS ]
-    info_names = raw_info_names if len(raw_info_names) else VALID_STOCK_INFOS
-
-    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
-    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
-
-    can_use_cache = preprocess_cache(ticker, CACHE_FILE_STOCK, should_delete_all_cache, should_clear_cached_data, should_use_cache)
-
-    should_update_cache, data = get_stock_data(ticker, source, info_names, can_use_cache)
-
-    log_debug(f'Final Data: {data}')
-
-    if not data:
-        return jsonify({ 'error': 'No data found' }), 404
-
-    if can_use_cache and should_update_cache:
-        upsert_cache(ticker, CACHE_FILE_STOCK, data)
-
-    return jsonify(data), 200
+    return _crawl_data(ticker, VALID_STOCK_INFOS, VALID_STOCK_SOURCES, CACHE_FILE_STOCK, get_stock_data)
 
 @controller_blue_print.route('/reit/<ticker>', methods=['GET'])
 def crawl_reit_data(ticker):
-    should_delete_all_cache = get_cache_parameter_info(request.args, 'should_delete_all_cache')
-    should_clear_cached_data = get_cache_parameter_info(request.args, 'should_clear_cached_data')
-    should_use_cache = get_cache_parameter_info(request.args, 'should_use_cache', '1')
-
-    ticker = ticker.upper()
-
-    raw_source = get_parameter_info(request.args, 'source', VALID_REIT_SOURCES['ALL_SOURCE'])
-    source = raw_source if raw_source in VALID_REIT_SOURCES.values() else VALID_REIT_SOURCES['ALL_SOURCE']
-
-    raw_info_names = [ info for info in get_parameter_info(request.args, 'info_names', '').split(',') if info in VALID_REIT_INFOS ]
-    info_names = raw_info_names if len(raw_info_names) else VALID_REIT_INFOS
-
-    log_debug(f'Should Delete cache? {should_delete_all_cache} - Should Clear cache? {should_clear_cached_data} - Should Use cache? {should_use_cache}')
-    log_debug(f'Ticker: {ticker} - Source: {source} - Info names: {info_names}')
-
-    can_use_cache = preprocess_cache(ticker, CACHE_FILE_REIT, should_delete_all_cache, should_clear_cached_data, should_use_cache)
-
-    should_update_cache, data = get_reit_data(ticker, source, info_names, can_use_cache)
-
-    log_debug(f'Final Data: {data}')
-
-    if not data:
-        return jsonify({ 'error': 'No data found' }), 404
-
-    if can_use_cache and should_update_cache:
-        upsert_cache(ticker, CACHE_FILE_REIT, data)
-
-    return jsonify(data), 200
+    return _crawl_data(ticker, VALID_REIT_INFOS, VALID_REIT_SOURCES, CACHE_FILE_REIT, get_reit_data)
 
 @controller_blue_print.route('/', methods=['GET'])
 def info():
